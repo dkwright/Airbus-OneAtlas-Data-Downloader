@@ -14,7 +14,8 @@ import time
 import traceback
 
 timestr = time.strftime("%Y%m%d-%H%M%S")
-logs_dir = path.abspath(path.join(path.dirname(__file__), "..", "logs"))
+
+logs_dir = path.abspath(path.join(path.dirname(__file__.split(".atbx")[0]), "..", "logs"))
 if not path.isdir(logs_dir):
     mkdir(logs_dir)
 logfile = join(logs_dir, "log-{}.txt".format(timestr))
@@ -60,7 +61,9 @@ except:
     logging.info("Exception while managing the Airbus_Results layer. Do you have an Active Map in this ArcGIS Pro Project? - traceback: " + tb)
 
 def get_api_key():
-    with open(path.abspath(path.join(path.dirname(__file__), "settings.json")), "r") as settings_file:
+    #Handling Pro 3.2 and later where atbx and info components are in path.dirname for the Python Toolbox Script 
+    dirname = path.dirname(__file__.split(".atbx")[0])
+    with open(path.abspath(path.join(dirname, "settings.json")), "r") as settings_file:
         data = settings_file.read()
     obj = loads(data)
     key = str(obj["apikey"])
@@ -68,7 +71,7 @@ def get_api_key():
     return key.strip()
 
 def get_dl_dir():
-    with open(path.abspath(path.join(path.dirname(__file__), "settings.json")), "r") as settings_file:
+    with open(path.abspath(path.join(path.dirname(__file__.split(".atbx")[0]), "settings.json")), "r") as settings_file:
         data = settings_file.read()
     obj = loads(data)
     dl_dir = str(obj["download_dir"])
@@ -81,6 +84,7 @@ def get_token(api_key):
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     response = requests.request("POST", url, headers=headers, data=payload)
     # TODO try except on HTTP403 (stale apikey)
+    logging.info("get_token response.text: " + response.text)
     return loads(response.text)["access_token"]
 
 def get_products_in_workspace(token):
@@ -217,21 +221,21 @@ class ToolValidator(object):
             aprx.activeView.camera.scale*= 1.20
 
         # update the settings json file with user's specified download directory         
-        a_file = open(path.abspath(path.join(path.dirname(__file__), "settings.json")), "r")
+        a_file = open(path.abspath(path.join(path.dirname(__file__.split(".atbx")[0]), "settings.json")), "r")
         json_object = load(a_file)
         if isdir(str(self.params[3].value)):
             json_object["download_dir"] = str(self.params[3].value)
         else:
             json_object["download_dir"] = "Select directory for downloading"
-        a_file = open(path.abspath(path.join(path.dirname(__file__), "settings.json")), "w")
+        a_file = open(path.abspath(path.join(path.dirname(__file__.split(".atbx")[0]), "settings.json")), "w")
         dump(json_object, a_file)
         a_file.close()
 
         # update the settings json file with user's API Key  
-        a_file = open(path.abspath(path.join(path.dirname(__file__), "settings.json")), "r")
+        a_file = open(path.abspath(path.join(path.dirname(__file__.split(".atbx")[0]), "settings.json")), "r")
         json_object = load(a_file)
         json_object["apikey"] = str(self.params[0].value)
-        a_file = open(path.abspath(path.join(path.dirname(__file__), "settings.json")), "w")
+        a_file = open(path.abspath(path.join(path.dirname(__file__.split(".atbx")[0]), "settings.json")), "w")
         dump(json_object, a_file)
         a_file.close()
 
@@ -250,6 +254,6 @@ class ToolValidator(object):
 
         # Make sure there is a product selected when 'Select all products' is unchecked 
         if not self.params[1].value and self.params[2].value == False:
-            self.params[1].setErrorMessage("No product selection has been made.")
+            self.params[1].setWarningMessage("No product selection has been made.")
 
         return

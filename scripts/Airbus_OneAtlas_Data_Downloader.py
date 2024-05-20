@@ -6,10 +6,9 @@ try:
     from ujson import loads
 except:
     from json import loads
-import os
-val = path.abspath(path.join(path.dirname(__file__), "..", "Parameter", "Config", "DEA.xml"))
+
 def read_api_key():
-    with open(path.abspath(path.join(path.dirname(__file__), "..", "arcgis", "settings.json")), "r") as settings_file:
+    with open(path.abspath(path.join(path.dirname(__file__.split(".atbx")[0]), "..", "arcgis", "settings.json")), "r") as settings_file:
         data = settings_file.read()
     obj = loads(data)
     api_key = str(obj["apikey"])
@@ -40,8 +39,8 @@ def get_products_in_workspace(auth_header, workspace_id):
     products = []
     for feature in loads(response.text)["features"]:
         products.append(feature["properties"]["id"] + "," 
-            + feature["_links"]["download"][1]["href"] + ","
-            + feature["_links"]["download"][1]["resourceId"])
+            + feature["_links"]["download"][2]["href"] + ","
+            + feature["_links"]["download"][2]["resourceId"])
     return products
 
 def get_product_info(workspace_id, selected_product, auth_header):
@@ -50,11 +49,12 @@ def get_product_info(workspace_id, selected_product, auth_header):
     headers = {"Cache-Control": "no-cache","Authorization": auth_header, "Content-Type": "application/json"}
     response = requests.request("GET", url, headers=headers, params=querystring)
     for feature in loads(response.text)["features"]:
-        product_href = feature["_links"]["download"][1]["href"]
-        product_resource_id = feature["_links"]["download"][1]["resourceId"]
+        product_href = feature["_links"]["download"][2]["href"]
+        product_resource_id = feature["_links"]["download"][2]["resourceId"]
     return product_href, product_resource_id
 
 def download_product_stream(href, filename):
+    AddMessage("href {0}: filename {1}".format(href, filename))
     AddMessage("Started downloading {0}".format(filename))
     global auth_header
     headers = {"Authorization": auth_header}
@@ -79,7 +79,7 @@ def extract_product(product_resource_id, download_dir):
 
 if __name__ == "__main__":
     #Use this for debugging in the execution code
-    #with open(path.abspath(path.join(path.dirname(__file__), "..", "logs", "processing-log.txt")), "w") as proc_log_file:
+    #with open(path.abspath(path.join(path.dirname(__file__.split(".atbx")[0]), "..", "logs", "processing-log.txt")), "w") as proc_log_file:
     #    proc_log_file.write("processing...")
     #    proc_log_file.close()
 
